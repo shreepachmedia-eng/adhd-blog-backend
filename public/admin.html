@@ -1,1 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - Blog CMS</title>
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --primary: #8B5CF6;
+  --primary-dark: #7C3AED;
+  --bg: #F9FAFB;
+  --card: #FFFFFF;
+  --border: #E5E7EB;
+  --text: #111827;
+  --text-light: #6B7280;
+  --success: #10B981;
+  --danger: #EF4444;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
 
+/* SIDEBAR */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 240px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+.logo { font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 30px; }
+.nav-item {
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  font-size: 14px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.2s;
+}
+.nav-item:hover { background: var(--bg); }
+.nav-item.active { background: var(--primary); color: white; }
+.nav-item svg { width: 18px; height: 18px; }
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.user-info { font-size: 13px; color: var(--text-light); margin-bottom: 10px; }
+.btn-logout {
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+}
+.btn-logout:hover { background: var(--bg); }
+
+/* MAIN CONTENT */
+.main {
+  margin-left: 240px;
+  min-height: 100vh;
+  padding: 40px;
+}
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* LOGIN */
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg);
+}
+.login-box {
+  background: var(--card);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  width: 100%;
+  max-width: 400px;
+}
+.login-box h1 { margin-bottom: 24px; font-size: 24px; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
+.form-group input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+}
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+.error-msg { color: var(--danger); font-size: 13px; margin-top: 10px; }
+
+/* DASHBOARD */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+.header h1 { font-size: 28px; }
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.btn-new {
+  background: var(--primary);
+  color: white;
+}
+.btn-new:hover { background: var(--primary-dark); }
+
+/* POSTS TABLE */
+.posts-table {
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+thead {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+td {
+  padding: 14px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+tr:last-child td { border-bottom: none; }
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.status-published { background: #D1FAE5; color: #065F46; }
+.status-draft { background: #FEF3C7; color: #92400E; }
+.post-actions {
+  display: flex;
+  gap: 8px;
+}
+.icon-btn {
+  padding: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-light);
+}
+.icon-btn:hover { background: var(--bg); }
+
+/* EDITOR */
+.editor-container {
+  max-width: 900px;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 30px;
+  border: 1px solid var(--border);
+}
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.editor-actions {
+  display: flex;
+  gap: 10px;
+}
+.btn-save { background: var(--success); color: white; }
+.btn-cancel { background: transparent; border: 1px solid var(--border); }
+#editor { height: 400px; }
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.image-upload {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.image-upload:hover {
+  border-color: var(--primary);
+  background: var(--bg);
+}
+.image-preview {
+  max-width: 200px;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+/* IMAGE GALLERY */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.image-card {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.image-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.image-card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+}
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-container">
+  <div class="login-box">
+    <h1>Admin Login</h1>
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" required>
+      </div>
+      <button type="submit" class="btn-primary">Login</button>
+      <div id="loginError" class="error-msg hidden"></div>
+    </form>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="hidden">
+  <div class="sidebar">
+    <div class="logo">✍️ Blog CMS</div>
+    <div class="nav-item active" data-screen="dashboard">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" data-screen="posts">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Posts
+    </div>
+    <div class="nav-item" data-screen="pages">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      Pages
+    </div>
+    <div class="nav-item" data-screen="images">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Images
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-info" id="userEmail"></div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- DASHBOARD -->
+    <div id="dashboardScreen" class="screen active">
+      <div class="header">
+        <h1>Dashboard</h1>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+        <div style="background:var(--card);padding:24px;border-radius:12px;border:1px solid var(--border);">
+          <div style="font-size:32px;font-weight:700;color:var(--primary);" id="totalPosts">0</div>
+          <div style="font-size:14px;color:var(--text-light);">Total Posts</div>
+        </div>
+        <div style="background:var(--card);padding:24px;border-radius:12px;border:1px solid var(--border);">
+          <div style="font-size:32px;font-weight:700;color:var(--success);" id="publishedPosts">0</div>
+          <div style="font-size:14px;color:var(--text-light);">Published</div>
+        </div>
+        <div style="background:var(--card);padding:24px;border-radius:12px;border:1px solid var(--border);">
+          <div style="font-size:32px;font-weight:700;color:var(--text-light);" id="totalImages">0</div>
+          <div style="font-size:14px;color:var(--text-light);">Images</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POSTS LIST -->
+    <div id="postsScreen" class="screen">
+      <div class="header">
+        <h1>Blog Posts</h1>
+        <button class="btn btn-new" onclick="showEditor('post')">+ New Post</button>
+      </div>
+      <div class="posts-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="postsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAGES LIST -->
+    <div id="pagesScreen" class="screen">
+      <div class="header">
+        <h1>Pages</h1>
+        <button class="btn btn-new" onclick="showEditor('page')">+ New Page</button>
+      </div>
+      <div class="posts-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="pagesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EDITOR -->
+    <div id="editorScreen" class="screen">
+      <div class="editor-container">
+        <div class="editor-header">
+          <h2 id="editorTitle">New Post</h2>
+          <div class="editor-actions">
+            <button class="btn btn-cancel" onclick="closeEditor()">Cancel</button>
+            <button class="btn btn-save" onclick="saveContent()">Save</button>
+          </div>
+        </div>
+        <form id="contentForm">
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="contentTitle" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Slug</label>
+              <input type="text" id="contentSlug">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="contentStatus">
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Content</label>
+            <div id="editor"></div>
+          </div>
+          <div class="form-group">
+            <label>Featured Image</label>
+            <div class="image-upload" onclick="document.getElementById('featuredImageInput').click()">
+              <div>Click to upload or drag & drop</div>
+              <input type="file" id="featuredImageInput" accept="image/*" style="display:none;">
+            </div>
+            <img id="featuredImagePreview" class="image-preview hidden">
+          </div>
+          <div class="form-group">
+            <label>Meta Description (SEO)</label>
+            <textarea id="metaDescription" rows="3" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Keywords (comma-separated)</label>
+            <input type="text" id="keywords">
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- IMAGES -->
+    <div id="imagesScreen" class="screen">
+      <div class="header">
+        <h1>Image Gallery</h1>
+        <button class="btn btn-new" onclick="document.getElementById('uploadImageInput').click()">+ Upload Image</button>
+        <input type="file" id="uploadImageInput" accept="image/*" multiple style="display:none;">
+      </div>
+      <div class="image-grid" id="imageGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script>
+let currentUser = null;
+let quillEditor = null;
+let editingContent = null;
+let editingType = 'post';
+
+// Check auth on load
+async function checkAuth() {
+  const res = await fetch('/api/auth/check');
+  const data = await res.json();
+  if (data.authenticated) {
+    currentUser = data.email;
+    showApp();
+  } else {
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
+}
+
+// Login
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  
+  const data = await res.json();
+  if (data.success) {
+    currentUser = data.email;
+    showApp();
+  } else {
+    document.getElementById('loginError').textContent = 'Invalid credentials';
+    document.getElementById('loginError').classList.remove('hidden');
+  }
+});
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  location.reload();
+}
+
+function showApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('userEmail').textContent = currentUser;
+  loadDashboard();
+  loadPosts();
+  loadPages();
+  loadImages();
+}
+
+// Navigation
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    const screen = item.dataset.screen;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screen + 'Screen').classList.add('active');
+  });
+});
+
+// Dashboard
+async function loadDashboard() {
+  const posts = await fetch('/api/posts?status=all').then(r => r.json());
+  const images = await fetch('/api/images').then(r => r.json());
+  document.getElementById('totalPosts').textContent = posts.length;
+  document.getElementById('publishedPosts').textContent = posts.filter(p => p.status === 'published').length;
+  document.getElementById('totalImages').textContent = images.length;
+}
+
+// Posts
+async function loadPosts() {
+  const posts = await fetch('/api/posts?status=all').then(r => r.json());
+  const tbody = document.getElementById('postsTableBody');
+  tbody.innerHTML = posts.map(p => `
+    <tr>
+      <td><strong>${p.title}</strong></td>
+      <td><span class="status-badge status-${p.status}">${p.status}</span></td>
+      <td>${new Date(p.date).toLocaleDateString()}</td>
+      <td class="post-actions">
+        <button class="icon-btn" onclick="editPost('${p.id}')">✏️</button>
+        <button class="icon-btn" onclick="deletePost('${p.id}')">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadPages() {
+  const pages = await fetch('/api/pages').then(r => r.json());
+  const tbody = document.getElementById('pagesTableBody');
+  tbody.innerHTML = pages.map(p => `
+    <tr>
+      <td><strong>${p.title}</strong></td>
+      <td><span class="status-badge status-${p.status}">${p.status}</span></td>
+      <td class="post-actions">
+        <button class="icon-btn" onclick="editPage('${p.id}')">✏️</button>
+        <button class="icon-btn" onclick="deletePage('${p.id}')">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Editor
+function showEditor(type) {
+  editingType = type;
+  editingContent = null;
+  document.getElementById('editorTitle').textContent = `New ${type === 'post' ? 'Post' : 'Page'}`;
+  document.getElementById('contentForm').reset();
+  document.getElementById('featuredImagePreview').classList.add('hidden');
+  
+  if (!quillEditor) {
+    quillEditor = new Quill('#editor', {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          ['bold', 'italic', 'underline'],
+          [{ 'header': [1, 2, 3, false] }],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['link', 'image'],
+          ['clean']
+        ]
+      }
+    });
+  } else {
+    quillEditor.setText('');
+  }
+  
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('editorScreen').classList.add('active');
+}
+
+async function editPost(id) {
+  const post = await fetch(`/api/posts/${id}`).then(r => r.json());
+  editingContent = post;
+  editingType = 'post';
+  document.getElementById('editorTitle').textContent = 'Edit Post';
+  document.getElementById('contentTitle').value = post.title;
+  document.getElementById('contentSlug').value = post.slug;
+  document.getElementById('contentStatus').value = post.status;
+  document.getElementById('metaDescription').value = post.metaDescription || '';
+  document.getElementById('keywords').value = post.keywords || '';
+  
+  if (!quillEditor) {
+    quillEditor = new Quill('#editor', { theme: 'snow' });
+  }
+  quillEditor.root.innerHTML = post.content;
+  
+  if (post.featuredImage) {
+    document.getElementById('featuredImagePreview').src = post.featuredImage;
+    document.getElementById('featuredImagePreview').classList.remove('hidden');
+  }
+  
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('editorScreen').classList.add('active');
+}
+
+async function editPage(id) {
+  const page = await fetch(`/api/pages/${id}`).then(r => r.json());
+  editingContent = page;
+  editingType = 'page';
+  document.getElementById('editorTitle').textContent = 'Edit Page';
+  document.getElementById('contentTitle').value = page.title;
+  document.getElementById('contentSlug').value = page.slug;
+  document.getElementById('contentStatus').value = page.status;
+  document.getElementById('metaDescription').value = page.metaDescription || '';
+  
+  if (!quillEditor) {
+    quillEditor = new Quill('#editor', { theme: 'snow' });
+  }
+  quillEditor.root.innerHTML = page.content;
+  
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('editorScreen').classList.add('active');
+}
+
+async function saveContent() {
+  const data = {
+    title: document.getElementById('contentTitle').value,
+    slug: document.getElementById('contentSlug').value,
+    content: quillEditor.root.innerHTML,
+    status: document.getElementById('contentStatus').value,
+    metaDescription: document.getElementById('metaDescription').value,
+    keywords: document.getElementById('keywords').value,
+    featuredImage: document.getElementById('featuredImagePreview').src || ''
+  };
+  
+  const url = editingContent 
+    ? `/api/${editingType}s/${editingContent.id}` 
+    : `/api/${editingType}s`;
+  const method = editingContent ? 'PUT' : 'POST';
+  
+  await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  
+  closeEditor();
+  if (editingType === 'post') loadPosts();
+  else loadPages();
+  loadDashboard();
+}
+
+function closeEditor() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(editingType + 'sScreen').classList.add('active');
+}
+
+async function deletePost(id) {
+  if (confirm('Delete this post?')) {
+    await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+    loadPosts();
+    loadDashboard();
+  }
+}
+
+async function deletePage(id) {
+  if (confirm('Delete this page?')) {
+    await fetch(`/api/pages/${id}`, { method: 'DELETE' });
+    loadPages();
+  }
+}
+
+// Featured image upload
+document.getElementById('featuredImageInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const formData = new FormData();
+  formData.append('image', file);
+  
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData
+  });
+  
+  const data = await res.json();
+  document.getElementById('featuredImagePreview').src = data.url;
+  document.getElementById('featuredImagePreview').classList.remove('hidden');
+});
+
+// Images
+async function loadImages() {
+  const images = await fetch('/api/images').then(r => r.json());
+  const grid = document.getElementById('imageGrid');
+  grid.innerHTML = images.map(img => `
+    <div class="image-card">
+      <img src="${img.url}" alt="${img.filename}">
+      <div class="image-card-actions">
+        <button class="icon-btn" onclick="copyImageUrl('${img.url}')">📋</button>
+        <button class="icon-btn" onclick="deleteImage('${img.filename}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('uploadImageInput').addEventListener('change', async (e) => {
+  for (const file of e.target.files) {
+    const formData = new FormData();
+    formData.append('image', file);
+    await fetch('/api/upload', { method: 'POST', body: formData });
+  }
+  loadImages();
+  loadDashboard();
+});
+
+function copyImageUrl(url) {
+  navigator.clipboard.writeText(window.location.origin + url);
+  alert('Image URL copied!');
+}
+
+async function deleteImage(filename) {
+  if (confirm('Delete this image?')) {
+    await fetch(`/api/images/${filename}`, { method: 'DELETE' });
+    loadImages();
+    loadDashboard();
+  }
+}
+
+// Init
+checkAuth();
+</script>
+</body>
+</html>
